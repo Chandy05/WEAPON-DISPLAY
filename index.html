@@ -5,51 +5,64 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LIVE SCORE DISPLAY</title>
     <style>
-        /* รีเซ็ตค่าขอบเขตทั้งหมดให้คำนวณรวมใน 100% */
+        /* ตั้งค่าพื้นฐานให้ขึงตึง 100% ทุกอุปกรณ์ */
         *, *:before, *:after { box-sizing: border-box; }
+        html, body { 
+            background-color: #e9ecef; margin: 0; padding: 0; 
+            font-family: 'Tahoma', sans-serif; 
+            height: 100%; width: 100%; 
+            overflow: hidden; /* ห้ามมี Scrollbar เด็ดขาด */
+        }
+
+        /* ตารางหลัก สูงเต็มจอ */
+        table { 
+            width: 100%; height: 100%; 
+            border-collapse: collapse; background: white; 
+            table-layout: fixed; border: 4px solid #343a40; 
+        }
+
+        /* ส่วนหัวตาราง (Fixed Height 8%) */
+        thead { height: 8vh; }
+        th { 
+            background-color: #343a40; color: white; 
+            font-size: 3vh; font-weight: bold; 
+            border: 2px solid #555; text-transform: uppercase; 
+        }
+
+        /* ส่วนเนื้อหา (92% ที่เหลือ จะถูกแบ่งตามจำนวนนักบิน) */
+        tbody { height: 92vh; }
         
-        /* บังคับหน้าจอ 100% ขึงตึงทุกสัดส่วน ไม่มีแถบเลื่อน (Scrollbar) แน่นอน */
-        html, body { background-color: #e9ecef; margin: 0; padding: 0; font-family: 'Tahoma', sans-serif; height: 100%; width: 100%; overflow: hidden; }
+        /* แถวนักบิน: ความสูงจะถูกคำนวณผ่าน JavaScript ตามจำนวนนักบินจริง */
+        tr.pilot-block { height: var(--row-height, 23vh); }
         
-        /* สัดส่วนตาราง 100% ของหน้าจอ */
-        table { width: 100%; height: 100%; border-collapse: collapse; background: white; table-layout: fixed; border: 4px solid #343a40; margin: 0; }
-        
-        /* หัวตาราง */
-        thead { height: 8%; } /* ล็อกความสูงหัวตารางไว้ที่ 8% ของจอ */
-        th { background-color: #343a40; color: white; font-size: 3vh; font-weight: bold; border: 2px solid #555; text-transform: uppercase; padding: 0; }
-        
-        /* ช่องข้อมูลนักบิน */
-        tbody { height: 92%; }
-        tbody tr { height: 25%; } /* บังคับให้นักบิน 4 คน แบ่งความสูงคนละ 25% พอดีเป๊ะ */
-        td { border: 2px solid #bbb; text-align: center; vertical-align: top; padding: 0; height: 100%; }
-        tr td { border-bottom: 4px solid #343a40 !important; } 
-        
-        /* คอลัมน์นักบินปรับให้แคบลงตามที่ต้องการ (ประมาณ 6%) */
-        .th-pilot { width: 6%; border-right: 4px solid #555; }
-        .pilot-col { width: 6%; border-right: 4px solid #343a40 !important; background: #f8f9fa; vertical-align: middle; }
+        td { border: 2px solid #bbb; text-align: center; vertical-align: top; padding: 0; }
+        tr td { border-bottom: 4px solid #343a40 !important; }
+
+        /* คอลัมน์หมายเลข (#) */
+        .th-pilot { width: 7%; border-right: 4px solid #555; }
+        .pilot-col { vertical-align: middle; background: #f8f9fa; border-right: 4px solid #343a40 !important; }
         .pilot-num { font-size: 5vh; font-weight: bold; color: #000; }
-        
-        /* แถวคะแนน 4 แถว แบ่งให้สูงเท่าๆ กัน */
+
+        /* การแบ่ง 4 แถวข้างในช่องคะแนน */
         .score-cell { display: flex; flex-direction: column; height: 100%; width: 100%; }
         .bomb-row { 
-            flex: 1; 
-            min-height: 0; /* สำคัญมาก: ป้องกันไม่ให้ตัวหนังสือดันกล่องให้ล้น */
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 4vh; font-weight: bold; color: #000; 
-            border-bottom: 2px solid #ccc; width: 100%; transition: 0.1s; 
+            flex: 1; /* แบ่งพื้นที่ 4 ส่วนเท่ากันเป๊ะ */
+            min-height: 0; display: flex; align-items: center; justify-content: center; 
+            font-size: 4.2vh; font-weight: bold; color: #000; 
+            border-bottom: 2px solid #ddd; width: 100%; transition: 0.1s; 
         }
         .bomb-row:last-child { border-bottom: none; }
-        
+
         /* คอลัมน์ STRF รวม */
         .th-strf-total { width: 10%; background-color: #2c3e50; }
-        .total-col { background: #fff3cd; color: #856404; font-weight: bold; font-size: 6vh; vertical-align: middle; }
-        
-        .empty-state { font-size: 4vh; color: #666; vertical-align: middle; font-weight: bold; }
-        .status-dot { position: fixed; bottom: 5px; left: 5px; width: 10px; height: 10px; background: #00e676; border-radius: 50%; opacity: 0.6; z-index: 100; }
+        .total-col { background: #fff3cd; color: #856404; font-weight: bold; font-size: 6.5vh; vertical-align: middle; }
 
-        /* กรอบสีเขียว(ล่าสุด) และกรอบเคอร์เซอร์(รอรับข้อมูล) */
-        .latest-hl { background-color: #d4edda !important; border-radius: 6px; padding: 0 10px; margin: 1px; box-shadow: 0 0 5px rgba(0,0,0,0.2); }
+        /* สถานะพิเศษ */
+        .latest-hl { background-color: #d4edda !important; border-radius: 6px; padding: 0 10px; margin: 1px; }
         .target-cursor { background-color: #fffde7 !important; box-shadow: inset 0 0 0 4px #d32f2f !important; }
+        
+        .status-dot { position: fixed; bottom: 5px; left: 5px; width: 10px; height: 10px; background: #00e676; border-radius: 50%; opacity: 0.5; }
+        .empty-state { font-size: 4vh; color: #999; vertical-align: middle; }
     </style>
 </head>
 <body>
@@ -57,11 +70,11 @@
     <table id="displayTable">
         <thead id="tableHead"></thead>
         <tbody id="tableBody">
-            <tr><td class="empty-state">STANDBY (รอรับข้อมูลการยิง...)</td></tr>
+            <tr><td class="empty-state">STANDBY...</td></tr>
         </tbody>
     </table>
     
-    <div class="status-dot" title="Connected"></div>
+    <div class="status-dot"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
@@ -92,77 +105,65 @@
             let thead = document.getElementById('tableHead');
             let tbody = document.getElementById('tableBody');
             
-            if (pilots.length === 0 || columns.length === 0) {
-                thead.innerHTML = "";
-                tbody.innerHTML = `<tr><td class="empty-state">STANDBY (รอรับข้อมูลการยิง...)</td></tr>`;
-                return;
-            }
+            if (pilots.length === 0 || columns.length === 0) return;
 
-            // เช็คว่ามีคอลัมน์ STRF อย่างน้อย 1 คอลัมน์หรือไม่
+            // --- คำนวณความสูงแถวแบบ Dynamic ---
+            // เอาความสูงจอ 92% หารด้วยจำนวนนักบิน เพื่อให้เต็มจอพอดีเสมอ
+            let rowHeight = (92 / pilots.length) + "vh";
+            document.documentElement.style.setProperty('--row-height', rowHeight);
+
             let hasSTRF = columns.some(col => col.name.toUpperCase().startsWith("STRF"));
 
-            // --- Header ---
+            // --- วาด Header ---
             let headHTML = `<tr><th class="th-pilot">#</th>`;
-            columns.forEach(col => {
-                headHTML += `<th>${col.name}</th>`;
-            });
-            if (hasSTRF) {
-                headHTML += `<th class="th-strf-total">รวม STRF</th>`;
-            }
+            columns.forEach(col => { headHTML += `<th>${col.name}</th>`; });
+            if (hasSTRF) { headHTML += `<th class="th-strf-total">รวม STRF</th>`; }
             headHTML += `</tr>`;
             thead.innerHTML = headHTML;
 
-            // --- Body ---
+            // --- วาด Body ---
             let bodyHTML = "";
             pilots.forEach(p => {
-                bodyHTML += `<tr>`;
+                bodyHTML += `<tr class="pilot-block">`;
                 
-                // ดึงเลข #1 #2 #3 #4 มาโชว์เสมอ ไม่ว่าจะกรอกชื่อหรือไม่
-                let pNumText = p.num;
-                if(!pNumText || pNumText.trim() === "") pNumText = `#${p.pId}`;
+                // ลำดับเครื่อง
+                let pNumText = p.num || `#${p.pId}`;
                 bodyHTML += `<td class="pilot-col"><div class="pilot-num">${pNumText}</div></td>`;
                 
                 let pCols = p.cols || {};
-                let strfTotal = 0; // ตัวแปรเก็บผลรวม STRF ของนักบินคนนี้
+                let strfTotal = 0;
 
                 columns.forEach(col => {
                     let passes = pCols[col.id] || [];
                     bodyHTML += `<td><div class="score-cell">`;
                     
+                    // วาด 4 แถวเสมอ (ขึงตึงด้วย Flex)
                     for(let i=0; i<4; i++) {
                         let cellData = passes[i] || { val: "", isLatest: false, isTarget: false };
-                        let cleanScore = cellData.val.replace(/\+/g, '').trim();
+                        let val = cellData.val.replace(/\+/g, '').trim();
                         
-                        let colorStyle = "";
+                        let colorStyle = "color: #000;"; // Default เป็นสีดำ
                         let extraClass = "";
 
-                        // เช็คสี: แดงเฉพาะ N/S, เขียวเฉพาะ HIT, นอกนั้น (รวมถึง D และ OUT) จะเป็นสีดำปกติ
-                        if (cleanScore === "N/S") {
-                            colorStyle = "color: #d32f2f;";
-                        } else if (cleanScore === "HIT") {
-                            colorStyle = "color: #28a745;";
-                        }
-
-                        // คำนวณผลรวมเฉพาะคอลัมน์ STRF
-                        if (col.name.toUpperCase().startsWith("STRF")) {
-                            let n = parseInt(cleanScore);
-                            if (!isNaN(n)) strfTotal += n;
-                        }
+                        if (val === "N/S") colorStyle = "color: #d32f2f;"; // แดง
+                        else if (val === "HIT") colorStyle = "color: #28a745;"; // เขียว
 
                         if (cellData.isTarget) extraClass += " target-cursor";
                         if (cellData.isLatest) extraClass += " latest-hl";
+
+                        // คำนวณ STRF
+                        if (col.name.toUpperCase().startsWith("STRF")) {
+                            let n = parseInt(val); if (!isNaN(n)) strfTotal += n;
+                        }
                         
-                        bodyHTML += `<div class="bomb-row ${extraClass}" style="${colorStyle}">${cleanScore}</div>`;
+                        bodyHTML += `<div class="bomb-row ${extraClass}" style="${colorStyle}">${val}</div>`;
                     }
-                    
                     bodyHTML += `</div></td>`;
                 });
 
-                // วาดคอลัมน์ผลรวม STRF ปิดท้าย (ถ้ามี)
                 if (hasSTRF) {
                     bodyHTML += `<td class="total-col">${strfTotal}</td>`;
                 }
-
                 bodyHTML += `</tr>`;
             });
             tbody.innerHTML = bodyHTML;
