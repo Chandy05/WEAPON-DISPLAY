@@ -5,73 +5,70 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LIVE SCORE DISPLAY</title>
     <style>
-        /* ตั้งค่าพื้นฐานให้ขึงตึง 100% ทุกอุปกรณ์ */
+        /* รีเซ็ตค่าขอบเขตทั้งหมดให้พอดีเป๊ะ 100% */
         *, *:before, *:after { box-sizing: border-box; }
         html, body { 
             background-color: #e9ecef; margin: 0; padding: 0; 
             font-family: 'Tahoma', sans-serif; 
             height: 100%; width: 100%; 
-            overflow: hidden; /* ห้ามมี Scrollbar เด็ดขาด */
+            overflow: hidden; /* ล็อกหน้าจอห้ามมีแถบเลื่อน */
         }
 
-        /* ตารางหลัก สูงเต็มจอ */
+        /* ตารางหลักขึงตึง 100% */
         table { 
             width: 100%; height: 100%; 
             border-collapse: collapse; background: white; 
-            table-layout: fixed; border: 4px solid #343a40; 
+            table-layout: fixed; border: 3px solid #343a40; 
         }
 
-        /* ส่วนหัวตาราง (Fixed Height 8%) */
+        /* หัวตาราง (คงที่ 8% ของความสูงจอ) */
         thead { height: 8vh; }
         th { 
             background-color: #343a40; color: white; 
-            font-size: 3vh; font-weight: bold; 
-            border: 2px solid #555; text-transform: uppercase; 
+            font-size: 2.8vh; font-weight: bold; 
+            border: 1px solid #555; text-transform: uppercase; 
         }
 
-        /* ส่วนเนื้อหา (92% ที่เหลือ จะถูกแบ่งตามจำนวนนักบิน) */
+        /* ส่วนเนื้อหาแบ่งตามจำนวนนักบิน (92% ที่เหลือ) */
         tbody { height: 92vh; }
-        
-        /* แถวนักบิน: ความสูงจะถูกคำนวณผ่าน JavaScript ตามจำนวนนักบินจริง */
         tr.pilot-block { height: var(--row-height, 23vh); }
         
-        td { border: 2px solid #bbb; text-align: center; vertical-align: top; padding: 0; }
-        tr td { border-bottom: 4px solid #343a40 !important; }
+        td { border: 1px solid #bbb; text-align: center; vertical-align: top; padding: 0; }
+        tr td { border-bottom: 3px solid #343a40 !important; }
 
-        /* คอลัมน์หมายเลข (#) */
-        .th-pilot { width: 7%; border-right: 4px solid #555; }
-        .pilot-col { vertical-align: middle; background: #f8f9fa; border-right: 4px solid #343a40 !important; }
-        .pilot-num { font-size: 5vh; font-weight: bold; color: #000; }
+        /* คอลัมน์ลำดับเครื่อง (ปรับให้เล็กลงตามคำขอ) */
+        .th-pilot { width: 6%; }
+        .pilot-col { width: 6%; vertical-align: middle; background: #f8f9fa; border-right: 3px solid #343a40 !important; }
+        .pilot-num { font-size: 4vh; font-weight: bold; color: #000; }
 
-        /* การแบ่ง 4 แถวข้างในช่องคะแนน */
+        /* การแบ่งพื้นที่ 4 แถวในแต่ละช่อง */
         .score-cell { display: flex; flex-direction: column; height: 100%; width: 100%; }
         .bomb-row { 
-            flex: 1; /* แบ่งพื้นที่ 4 ส่วนเท่ากันเป๊ะ */
-            min-height: 0; display: flex; align-items: center; justify-content: center; 
-            font-size: 4.2vh; font-weight: bold; color: #000; 
-            border-bottom: 2px solid #ddd; width: 100%; transition: 0.1s; 
+            flex: 1; min-height: 0; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 4vh; font-weight: bold; color: #000; 
+            border-bottom: 1px solid #ddd; width: 100%; 
         }
         .bomb-row:last-child { border-bottom: none; }
 
+        /* จัดการสีของเครื่องหมาย + ให้เป็นสีแดง/ชมพู */
+        .plus-sign { color: #ff1744; margin-left: 2px; }
+
         /* คอลัมน์ STRF รวม */
         .th-strf-total { width: 10%; background-color: #2c3e50; }
-        .total-col { background: #fff3cd; color: #856404; font-weight: bold; font-size: 6.5vh; vertical-align: middle; }
+        .total-col { background: #fff3cd; color: #856404; font-weight: bold; font-size: 6vh; vertical-align: middle; }
 
         /* สถานะพิเศษ */
-        .latest-hl { background-color: #d4edda !important; border-radius: 6px; padding: 0 10px; margin: 1px; }
-        .target-cursor { background-color: #fffde7 !important; box-shadow: inset 0 0 0 4px #d32f2f !important; }
-        
-        .status-dot { position: fixed; bottom: 5px; left: 5px; width: 10px; height: 10px; background: #00e676; border-radius: 50%; opacity: 0.5; }
-        .empty-state { font-size: 4vh; color: #999; vertical-align: middle; }
+        .latest-hl { background-color: #d4edda !important; }
+        .target-cursor { background-color: #fffde7 !important; box-shadow: inset 0 0 0 3px #d32f2f !important; }
+        .status-dot { position: fixed; bottom: 5px; left: 5px; width: 8px; height: 8px; background: #00e676; border-radius: 50%; opacity: 0.4; }
     </style>
 </head>
 <body>
 
     <table id="displayTable">
         <thead id="tableHead"></thead>
-        <tbody id="tableBody">
-            <tr><td class="empty-state">STANDBY...</td></tr>
-        </tbody>
+        <tbody id="tableBody"></tbody>
     </table>
     
     <div class="status-dot"></div>
@@ -96,8 +93,25 @@
 
         onValue(displayRef, (snapshot) => {
             const data = snapshot.val();
-            if (data) { renderBoard(data); }
+            if (data) renderBoard(data);
         });
+
+        // ฟังก์ชันช่วยจัดการสีและเครื่องหมาย +
+        function formatScore(val) {
+            if (!val) return "";
+            let color = "#000"; // สีดำปกติสำหรับตัวเลข, D, OUT
+            
+            if (val === "N/S") color = "#d32f2f"; // แดงสำหรับ N/S
+            else if (val === "HIT") color = "#28a745"; // เขียวสำหรับ HIT
+            
+            // ถ้ามีเครื่องหมาย + ให้แยกออกมาใส่สีแดง/ชมพู
+            let displayText = val;
+            if (val.includes("+")) {
+                displayText = val.replace("+", '<span class="plus-sign">+</span>');
+            }
+            
+            return `<span style="color: ${color}">${displayText}</span>`;
+        }
 
         function renderBoard(data) {
             let columns = data.columns || [];
@@ -107,66 +121,41 @@
             
             if (pilots.length === 0 || columns.length === 0) return;
 
-            // --- คำนวณความสูงแถวแบบ Dynamic ---
-            // เอาความสูงจอ 92% หารด้วยจำนวนนักบิน เพื่อให้เต็มจอพอดีเสมอ
-            let rowHeight = (92 / pilots.length) + "vh";
-            document.documentElement.style.setProperty('--row-height', rowHeight);
+            // คำนวณความสูงแถวให้พอดีเป๊ะ (92% / จำนวนนักบิน)
+            let rowH = (92 / pilots.length) + "vh";
+            document.documentElement.style.setProperty('--row-height', rowH);
 
             let hasSTRF = columns.some(col => col.name.toUpperCase().startsWith("STRF"));
 
-            // --- วาด Header ---
-            let headHTML = `<tr><th class="th-pilot">#</th>`;
-            columns.forEach(col => { headHTML += `<th>${col.name}</th>`; });
-            if (hasSTRF) { headHTML += `<th class="th-strf-total">รวม STRF</th>`; }
-            headHTML += `</tr>`;
-            thead.innerHTML = headHTML;
+            thead.innerHTML = `<tr><th class="th-pilot">#</th>` + 
+                columns.map(c => `<th>${c.name}</th>`).join('') + 
+                (hasSTRF ? `<th class="th-strf-total">รวม STRF</th>` : "") + `</tr>`;
 
-            // --- วาด Body ---
-            let bodyHTML = "";
-            pilots.forEach(p => {
-                bodyHTML += `<tr class="pilot-block">`;
-                
-                // ลำดับเครื่อง
-                let pNumText = p.num || `#${p.pId}`;
-                bodyHTML += `<td class="pilot-col"><div class="pilot-num">${pNumText}</div></td>`;
-                
-                let pCols = p.cols || {};
+            tbody.innerHTML = pilots.map(p => {
                 let strfTotal = 0;
-
-                columns.forEach(col => {
-                    let passes = pCols[col.id] || [];
-                    bodyHTML += `<td><div class="score-cell">`;
-                    
-                    // วาด 4 แถวเสมอ (ขึงตึงด้วย Flex)
+                let colsHTML = columns.map(col => {
+                    let passes = (p.cols || {})[col.id] || [];
+                    let rows = "";
                     for(let i=0; i<4; i++) {
-                        let cellData = passes[i] || { val: "", isLatest: false, isTarget: false };
-                        let val = cellData.val.replace(/\+/g, '').trim();
+                        let cell = passes[i] || { val: "", isLatest: false, isTarget: false };
+                        let cleanVal = cell.val.trim();
                         
-                        let colorStyle = "color: #000;"; // Default เป็นสีดำ
-                        let extraClass = "";
-
-                        if (val === "N/S") colorStyle = "color: #d32f2f;"; // แดง
-                        else if (val === "HIT") colorStyle = "color: #28a745;"; // เขียว
-
-                        if (cellData.isTarget) extraClass += " target-cursor";
-                        if (cellData.isLatest) extraClass += " latest-hl";
-
-                        // คำนวณ STRF
                         if (col.name.toUpperCase().startsWith("STRF")) {
-                            let n = parseInt(val); if (!isNaN(n)) strfTotal += n;
+                            let n = parseInt(cleanVal); if(!isNaN(n)) strfTotal += n;
                         }
-                        
-                        bodyHTML += `<div class="bomb-row ${extraClass}" style="${colorStyle}">${val}</div>`;
-                    }
-                    bodyHTML += `</div></td>`;
-                });
 
-                if (hasSTRF) {
-                    bodyHTML += `<td class="total-col">${strfTotal}</td>`;
-                }
-                bodyHTML += `</tr>`;
-            });
-            tbody.innerHTML = bodyHTML;
+                        let cls = (cell.isTarget ? " target-cursor" : "") + (cell.isLatest ? " latest-hl" : "");
+                        rows += `<div class="bomb-row${cls}">${formatScore(cleanVal)}</div>`;
+                    }
+                    return `<td><div class="score-cell">${rows}</div></td>`;
+                }).join('');
+
+                return `<tr class="pilot-block">
+                    <td class="pilot-col"><div class="pilot-num">${p.num || '#'+p.pId}</div></td>
+                    ${colsHTML}
+                    ${hasSTRF ? `<td class="total-col">${strfTotal}</td>` : ""}
+                </tr>`;
+            }).join('');
         }
     </script>
 </body>
