@@ -120,17 +120,29 @@
                 let tbody = document.getElementById('tableBody');
         
                 let rowCount = Math.max(pilots.length, 4);
-                let rowH = (isLocalMode ? (96 / rowCount) : (92 / rowCount)) + "vh";
-                document.documentElement.style.setProperty('--row-height', rowH);
+                if (!isLocalMode) document.documentElement.style.setProperty('--row-height', (92 / rowCount) + "vh");
 
                 let hasSTRF = columns.some(col => col.isSTRF);
 
-                thead.innerHTML = `<tr><th class="th-pilot">Pilot / Tail</th>` + 
+                if (isLocalMode) {
+                    let mH = data.missionHeader || "-";
+                    thead.innerHTML = `<tr><th colspan="${columns.length + (hasSTRF?2:1)}" id="tableMissionHeader">
+                        <div style="display: flex; align-items: center; justify-content: flex-start; gap: 12px;">
+                            <img src="https://raw.githubusercontent.com/Chandy05/Chandy-MetarUpdate/main/logo_main.png" style="height: 28px;">
+                            <span>${mH}</span>
+                        </div>
+                    </th></tr>` + 
+                    `<tr><th class="th-pilot">Pilot / Tail</th>` + 
+                    columns.map(c => `<th>${c.name}</th>`).join('') + 
+                    (hasSTRF ? `<th class="th-strf-total">รวม STRF</th>` : "") + `</tr>`;
+                } else {
+                    thead.innerHTML = `<tr><th class="th-pilot">#</th>` + 
                         columns.map(c => `<th>${c.name}</th>`).join('') + 
                         (hasSTRF ? `<th class="th-strf-total">TOTAL</th>` : "") + `</tr>`;
+                }
 
                 const rowsHtml = (pilots.length ? pilots : Array.from({ length: 4 }, (_, idx) => ({ pId: idx + 1, num: `#${idx + 1}`, strfTotal: 0, cols: {} }))).map(p => {
-                        let strfTotal = p.strfTotal || 0; // รับผลรวมที่คำนวณมาแล้วจากจอหลัก
+                        let strfTotal = p.strfTotal || 0; 
                         let colsHTML = columns.map(col => {
                                 let passes = (p.cols || {})[col.id] || [];
                                 let rows = "";
@@ -164,8 +176,19 @@
                                 return `<td><div class="score-cell">${rows}</div></td>`;
                         }).join('');
 
+                        let pilotInfoHTML = "";
+                        if (isLocalMode) {
+                            let tailDisp = p.tail ? `<span style="color:#d32f2f;font-weight:bold;background:#fff;border:1px solid #ffc107;border-radius:4px;padding:1px 2px;font-size:11px;display:inline-block;margin-top:2px;">Tail: ${p.tail}</span>` : "";
+                            pilotInfoHTML = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; height: 100%;">
+                                <div style="font-weight:bold;font-size:14px;text-transform:uppercase;">${p.num} ${p.pilotName || ""}</div>
+                                ${tailDisp}
+                            </div>`;
+                        } else {
+                            pilotInfoHTML = `<div class="pilot-num">${p.num}</div>`;
+                        }
+
                         return `<tr class="pilot-block">
-                                <td class="pilot-col"><div class="pilot-num">${p.num || '#'+p.pId}</div></td>
+                                <td class="pilot-col">${pilotInfoHTML}</td>
                                 ${colsHTML}
                                 ${hasSTRF ? `<td class="total-col">${strfTotal}</td>` : ""}
                         </tr>`;
