@@ -58,18 +58,26 @@
         .latest-hl { background-color: #d4edda !important; padding: 0 5px; border-radius: 4px; display: inline-block; }
         .target-cursor { background-color: #fffde7 !important; box-shadow: inset 0 0 0 3px #d32f2f !important; }
         .group-1 { color: #FF8F00 !important; } .group-2 { color: #0D47A1 !important; }
-        .group-3 { color: #C2185B !important; } .group-4 { color: #4A148C !important; }
-        
-        /* ธีมสำหรับหน้าจอ Local (ออฟฟิศ) ให้สวยงามเหมือนจอหลัก */
-        body.theme-local { padding: 10px; }
-        body.theme-local table { border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden; margin: 0 auto; width: 100%; height: 100%; }
-        body.theme-local th { padding: 10px; font-size: 3vh; background: #2c3e50; border: 1px solid #455a64; color: #ffeb3b; letter-spacing: 1px; }
-        body.theme-local .th-pilot { background: #1a252f; color: #fff; }
-        body.theme-local .pilot-col { background: #eef2f5; border-right: 3px solid #bdc3c7 !important; }
-        body.theme-local .pilot-num { font-size: 2.8vh; color: #2c3e50; text-transform: uppercase; }
-        body.theme-local .bomb-row { font-size: 3.5vh; }
-        body.theme-local td { border: 1px solid #cfd8dc; }
-        body.theme-local tr td { border-bottom: 2px solid #90a4ae !important; }
+        .group-3 { color: #C2185B !important; }
+        .group-4 { color: #4A148C !important; }
+
+        /* ธีม Local (ออฟฟิศ) โคลนหน้าตาจากตารางหลักมา 100% เป๊ะๆ */
+        body.theme-local { background-color: #e9ecef; padding: 15px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: auto; }
+        body.theme-local #displayTable { max-width: 1400px; margin: 0 auto; background: white; padding: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border-radius: 8px; border-collapse: collapse; table-layout: auto; height: auto; border: none; }
+        body.theme-local #tableHead th { background-color: #343a40; color: white; padding: 8px; font-size: 14px; text-transform: uppercase; border: 1px solid #bbb; }
+        body.theme-local #tableHead #tableMissionHeader { background: #2c3e50; color: #ffeb3b; font-size: 16px; text-align: left; padding: 8px 15px; font-weight: bold; letter-spacing: 1px; border: 1px solid #bbb; }
+        body.theme-local tbody { height: auto; }
+        body.theme-local tr.pilot-block { height: auto; }
+        body.theme-local td { border: 1px solid #bbb; padding: 2px; text-align: center; vertical-align: middle; }
+        body.theme-local .th-pilot { width: 12% !important; min-width: 110px !important; max-width: 130px !important; border-right: 3px solid #555 !important; }
+        body.theme-local .pilot-col { width: 12% !important; min-width: 110px !important; max-width: 130px !important; border-right: 3px solid #343a40 !important; background: #f8f9fa; padding: 2px !important; }
+        body.theme-local .pilot-num { font-size: 14px !important; font-weight: bold; color: #000; padding: 0; line-height: 1; }
+        body.theme-local .score-cell { vertical-align: top; padding: 0 !important; background: #fff; min-width: 55px; }
+        body.theme-local .bomb-row { white-space: nowrap !important; word-break: normal !important; padding-left: 8px !important; padding-right: 8px !important; border-bottom: 1px dotted #ccc; display: flex; align-items: center; justify-content: center; font-size: 15px !important; font-weight: bold; min-height: 24px; position: relative; width: 100%; color: #000; }
+        body.theme-local .bomb-row:last-child { border-bottom: none !important; }
+        body.theme-local tr td { border-bottom: 3px solid #343a40 !important; }
+        body.theme-local .th-strf-total { width: 12%; min-width: 45px; font-size: 12px; }
+        body.theme-local .total-col { background: #fff3cd; font-weight: bold; color: #856404; font-size: 16px !important; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
@@ -82,120 +90,147 @@
     </table>
     
         <script>
-            const urlParams = new URLSearchParams(window.location.search);
-            const isLocalMode = urlParams.get('local') === 'true';
+      const urlParams = new URLSearchParams(window.location.search);
+      const isLocalMode = urlParams.get('local') === 'true' || window.location.href.includes('local=true');
 
-            if (isLocalMode) {
-                    document.body.classList.add('theme-local');
-                    document.documentElement.style.setProperty('--pilot-col-width', '16%');
-                    document.documentElement.style.setProperty('--pilot-font-size', '2.8vh');
-                    document.title = "OFFICE DISPLAY (LOCAL)";
+      if (isLocalMode) {
+          document.body.classList.add('theme-local');
+          document.title = "OFFICE DISPLAY (LOCAL)";
 
-                    window.addEventListener('storage', (event) => {
-                        if (event.key === 'liveDisplayData' && event.newValue) renderBoard(JSON.parse(event.newValue));
-                    });
-                    window.addEventListener('DOMContentLoaded', () => {
-                        let initData = localStorage.getItem('liveDisplayData');
-                        if (initData) renderBoard(JSON.parse(initData));
-                    });
-            } else {
-                    document.documentElement.style.setProperty('--pilot-col-width', '6%');
-                    document.documentElement.style.setProperty('--pilot-font-size', '4vh');
+          window.addEventListener('storage', (event) => {
+            if (event.key === 'liveDisplayData' && event.newValue) renderBoard(JSON.parse(event.newValue));
+          });
+          window.addEventListener('DOMContentLoaded', () => {
+            let initData = localStorage.getItem('liveDisplayData');
+            if (initData) renderBoard(JSON.parse(initData));
+            else renderBoard(null);
+          });
+      } else {
+          window.addEventListener('DOMContentLoaded', () => {
+            let initData = localStorage.getItem('liveDisplayData');
+            if (initData) renderBoard(JSON.parse(initData));
+            else renderBoard(null);
+          });
+          if (!firebase.apps.length) {
+            firebase.initializeApp({ apiKey: "AIzaSyCpYbd6xbz8eDVv-PCrqMnXnNwzEkaa75g", authDomain: "chdy-score.firebaseapp.com", databaseURL: "https://chdy-score-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "chdy-score", storageBucket: "chdy-score.firebasestorage.app", messagingSenderId: "183108640986", appId: "1:183108640986:web:dc03c29b51875ee7cd05e3" });
+          }
+          firebase.database().ref('liveDisplay').on('value', (snapshot) => {
+            if (snapshot.val()) renderBoard(snapshot.val());
+          });
+      }
 
-                    if (!firebase.apps.length) {
-                        firebase.initializeApp({ apiKey: "AIzaSyCpYbd6xbz8eDVv-PCrqMnXnNwzEkaa75g", authDomain: "chdy-score.firebaseapp.com", databaseURL: "https://chdy-score-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "chdy-score", storageBucket: "chdy-score.firebasestorage.app", messagingSenderId: "183108640986", appId: "1:183108640986:web:dc03c29b51875ee7cd05e3" });
-                    }
-                    firebase.database().ref('liveDisplay').on('value', (snapshot) => {
-                        if (snapshot.val()) renderBoard(snapshot.val());
-                    });
-            }
 
-            function renderBoard(data) {
-                let columns = (data && Array.isArray(data.columns) && data.columns.length) ? data.columns : [
-                        { name: 'A', isSTRF: false }, { name: 'B', isSTRF: false },
-                        { name: 'C', isSTRF: false }, { name: 'D', isSTRF: false }
-                ];
-                let pilots = (data && Array.isArray(data.pilots)) ? data.pilots : [];
-                let thead = document.getElementById('tableHead');
-                let tbody = document.getElementById('tableBody');
+      function renderBoard(data) {
+        let displayTable = document.getElementById('displayTable');
+        if (!data || !data.columns || data.columns.length === 0 || data.isCleared) {
+            displayTable.style.display = 'none';
+            document.body.style.backgroundColor = '#ffffff';
+            return;
+        } else {
+            displayTable.style.display = 'table';
+            document.body.style.backgroundColor = '#e9ecef';
+        }
+
+        let columns = data.columns;
+        let pilots = (data && Array.isArray(data.pilots) && data.pilots.length) ? data.pilots : [];
+        let thead = document.getElementById('tableHead');
+        let tbody = document.getElementById('tableBody');
         
-                let rowCount = Math.max(pilots.length, 4);
-                if (!isLocalMode) document.documentElement.style.setProperty('--row-height', (92 / rowCount) + "vh");
+        let rowCount = Math.max(pilots.length, 4);
+        if (!isLocalMode) document.documentElement.style.setProperty('--row-height', (92 / rowCount) + "vh");
 
-                let hasSTRF = columns.some(col => col.isSTRF);
+        let hasSTRF = columns.some(col => col.isSTRF);
+        let nextLetter = String.fromCharCode(65 + columns.length);
 
-                if (isLocalMode) {
-                    let mH = data.missionHeader || "-";
-                    thead.innerHTML = `<tr><th colspan="${columns.length + (hasSTRF?2:1)}" id="tableMissionHeader">
-                        <div style="display: flex; align-items: center; justify-content: flex-start; gap: 12px;">
-                            <img src="https://raw.githubusercontent.com/Chandy05/Chandy-MetarUpdate/main/logo_main.png" style="height: 28px;">
-                            <span>${mH}</span>
-                        </div>
-                    </th></tr>` + 
-                    `<tr><th class="th-pilot">Pilot / Tail</th>` + 
-                    columns.map(c => `<th>${c.name}</th>`).join('') + 
-                    (hasSTRF ? `<th class="th-strf-total">รวม STRF</th>` : "") + `</tr>`;
-                } else {
-                    thead.innerHTML = `<tr><th class="th-pilot">#</th>` + 
-                        columns.map(c => `<th>${c.name}</th>`).join('') + 
-                        (hasSTRF ? `<th class="th-strf-total">TOTAL</th>` : "") + `</tr>`;
-                }
+        if (isLocalMode) {
+            let mH = (data && data.missionHeader) ? data.missionHeader : "-";
+            thead.innerHTML = `<tr><th colspan="${columns.length + (hasSTRF?2:1)}" id="tableMissionHeader">
+                <div style="display: flex; align-items: center; justify-content: flex-start; gap: 12px;">
+                    <img src="https://raw.githubusercontent.com/Chandy05/Chandy-MetarUpdate/main/logo_main.png" style="height: 28px;">
+                    <span>${mH}</span>
+                </div>
+            </th></tr>` + 
+            `<tr><th class="th-pilot">Pilot / Tail</th>` + 
+            columns.map(c => `<th style="padding: 8px;">${c.name}</th>`).join('') + 
+            (hasSTRF ? `<th class="th-strf-total">รวม STRF</th>` : "") + `</tr>`;
+        } else {
+            thead.innerHTML = `<tr><th class="th-pilot">#</th>` + 
+                columns.map(c => `<th>${c.name}</th>`).join('') + 
+                (hasSTRF ? `<th class="th-strf-total">${nextLetter}</th>` : "") + `</tr>`;
+        }
 
-                const rowsHtml = (pilots.length ? pilots : Array.from({ length: 4 }, (_, idx) => ({ pId: idx + 1, num: `#${idx + 1}`, strfTotal: 0, cols: {} }))).map(p => {
-                        let strfTotal = p.strfTotal || 0; 
-                        let colsHTML = columns.map(col => {
-                                let passes = (p.cols || {})[col.id] || [];
-                                let rows = "";
-                                for(let i=0; i<4; i++) {
-                                        let cell = passes[i] || { val: "", isLatest: false, isTarget: false, isMulti: false, groupClass: "" };
-                                        let cleanVal = cell.val ? String(cell.val).trim() : "";
-                                        let upVal = cleanVal.toUpperCase();
+        const fallbackPilots = Array.from({ length: 4 }, (_, idx) => ({ pId: idx + 1, num: `#${idx + 1}`, strfTotal: 0, cols: {} }));
+        const pilotsToRender = pilots.length > 0 ? pilots : fallbackPilots;
 
-                                        let cls = "bomb-row";
-                                        if (cell.isTarget) cls += " target-cursor";
+        const rowsHtml = pilotsToRender.map(p => {
+            let strfTotal = p.strfTotal || 0; 
+            let colsHTML = columns.map(col => {
+                let passes = (p.cols || {})[col.id] || [];
+                let rows = "";
+                for(let i=0; i<4; i++) {
+                    let cell = passes[i] || { val: "", isLatest: false, isTarget: false, isMulti: false, groupClass: "" };
+                    let cleanVal = cell.val ? String(cell.val).trim() : "";
+                    let upVal = cleanVal.toUpperCase();
 
-                                        let spanHtml = "";
-                                        if (cleanVal !== "") {
-                                                let inlineColor = "";
-                                                if (cell.isMulti) {
-                                                        if (cell.groupClass) cls += " " + cell.groupClass;
-                                                } else {
-                                                        if (upVal === "N/S" || upVal === "D" || upVal.includes("OUT/")) inlineColor = "color: #d32f2f;";
-                                                        else if (upVal === "HIT") inlineColor = "color: #28a745;";
-                                                        else inlineColor = "color: #000000;";
-                                                }
+                    let cls = "bomb-row";
+                    if (cell.isTarget) cls += " target-cursor";
 
-                                                let escaped = cleanVal.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                                                escaped = escaped.replace(/\+/g, '<span class="plus-sign">+</span>');
-                        
-                                                let hlClass = cell.isLatest ? "latest-hl " : "";
-                                                spanHtml = inlineColor ? `<span class="${hlClass}" style="${inlineColor}">${escaped}</span>` : `<span class="${hlClass}">${escaped}</span>`;
-                                        }
-                                        rows += `<div class="${cls}">${spanHtml}</div>`;
-                                }
-                                return `<td><div class="score-cell">${rows}</div></td>`;
-                        }).join('');
-
-                        let pilotInfoHTML = "";
-                        if (isLocalMode) {
-                            let tailDisp = p.tail ? `<span style="color:#d32f2f;font-weight:bold;background:#fff;border:1px solid #ffc107;border-radius:4px;padding:1px 2px;font-size:11px;display:inline-block;margin-top:2px;">Tail: ${p.tail}</span>` : "";
-                            pilotInfoHTML = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; height: 100%;">
-                                <div style="font-weight:bold;font-size:14px;text-transform:uppercase;">${p.num} ${p.pilotName || ""}</div>
-                                ${tailDisp}
-                            </div>`;
-                        } else {
-                            pilotInfoHTML = `<div class="pilot-num">${p.num}</div>`;
+                    let spanHtml = "";
+                    let hlClass = cell.isLatest ? "latest-hl " : "";
+                    
+                    if (isLocalMode) {
+                        if (cell.html && cell.html.trim() !== "") {
+                            if (cell.isMulti && cell.groupClass) cls += " " + cell.groupClass;
+                            spanHtml = `<div class="${hlClass}" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">${cell.html}</div>`;
                         }
+                    } else {
+                        if (cleanVal !== "") {
+                            let inlineColor = "";
+                            if (cell.isMulti) {
+                                if (cell.groupClass) cls += " " + cell.groupClass;
+                            } else {
+                                if (upVal === "N/S" || upVal === "D" || upVal.includes("OUT/")) inlineColor = "color: #d32f2f;";
+                                else if (upVal === "HIT") inlineColor = "color: #28a745;";
+                                else inlineColor = "color: #000000;";
+                            }
 
-                        return `<tr class="pilot-block">
-                                <td class="pilot-col">${pilotInfoHTML}</td>
-                                ${colsHTML}
-                                ${hasSTRF ? `<td class="total-col">${strfTotal}</td>` : ""}
-                        </tr>`;
-                }).join('');
+                            let escaped = cleanVal.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                            escaped = escaped.replace(/\+/g, '<span class="plus-sign">+</span>');
+                            
+                            // Re-inject colors for special stamp characters (F and *)
+                            escaped = escaped.replace(/\s+F$/g, ' <span style="color:#dc3545;font-weight:bold;margin-left:4px;">F</span>');
+                            escaped = escaped.replace(/\s+\*$/g, ' <span style="color:#ff9800;font-weight:bold;margin-left:4px;">*</span>');
 
-                tbody.innerHTML = rowsHtml;
+                            spanHtml = inlineColor ? `<span class="${hlClass}" style="${inlineColor}">${escaped}</span>` : `<span class="${hlClass}">${escaped}</span>`;
+                        }
+                    }
+                    rows += `<div class="${cls}">${spanHtml}</div>`;
+                }
+                return `<td><div class="score-cell">${rows}</div></td>`;
+            }).join('');
+
+            let pilotInfoHTML = "";
+            if (isLocalMode) {
+                let tailDisp = p.tail ? `<span style="color:#d32f2f;font-weight:bold;background:#fff;border:1px solid #ffc107;border-radius:4px;padding:1px 2px;font-size:11px;display:inline-block;">Tail: ${p.tail}</span>` : "";
+                let pilotNameDisp = p.pilotName ? `<span style="font-weight:bold;font-size:14px;text-transform:uppercase;color:#000;">${p.pilotName}</span>` : "";
+                pilotInfoHTML = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; height: 100%;">
+                    <div style="font-weight:bold;font-size:14px;color:#000;">${p.num}</div>
+                    ${pilotNameDisp}
+                    ${tailDisp}
+                </div>`;
+            } else {
+                pilotInfoHTML = `<div class="pilot-num">${p.num}</div>`;
             }
+
+            return `<tr class="pilot-block">
+                <td class="pilot-col">${pilotInfoHTML}</td>
+                ${colsHTML}
+                ${hasSTRF ? `<td class="total-col">${strfTotal}</td>` : ""}
+            </tr>`;
+        }).join('');
+
+        tbody.innerHTML = rowsHtml;
+      }
         </script>
 </body>
 </html>
