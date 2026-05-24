@@ -61,23 +61,23 @@
         .group-3 { color: #C2185B !important; }
         .group-4 { color: #4A148C !important; }
 
-        /* ธีม Local (ออฟฟิศ) โคลนหน้าตาจากตารางหลักมา 100% เป๊ะๆ */
-        body.theme-local { background-color: #e9ecef; padding: 15px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: auto; }
-        body.theme-local #displayTable { max-width: 1400px; margin: 0 auto; background: white; padding: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border-radius: 8px; border-collapse: collapse; table-layout: auto; height: auto; border: none; }
-        body.theme-local #tableHead th { background-color: #343a40; color: white; padding: 8px; font-size: 14px; text-transform: uppercase; border: 1px solid #bbb; }
-        body.theme-local #tableHead #tableMissionHeader { background: #2c3e50; color: #ffeb3b; font-size: 16px; text-align: left; padding: 8px 15px; font-weight: bold; letter-spacing: 1px; border: 1px solid #bbb; }
-        body.theme-local tbody { height: auto; }
-        body.theme-local tr.pilot-block { height: auto; }
-        body.theme-local td { border: 1px solid #bbb; padding: 2px; text-align: center; vertical-align: middle; }
-        body.theme-local .th-pilot { width: 12% !important; min-width: 110px !important; max-width: 130px !important; border-right: 3px solid #555 !important; }
-        body.theme-local .pilot-col { width: 12% !important; min-width: 110px !important; max-width: 130px !important; border-right: 3px solid #343a40 !important; background: #f8f9fa; padding: 2px !important; }
-        body.theme-local .pilot-num { font-size: 14px !important; font-weight: bold; color: #000; padding: 0; line-height: 1; }
-        body.theme-local .score-cell { vertical-align: top; padding: 0 !important; background: #fff; min-width: 55px; }
-        body.theme-local .bomb-row { white-space: nowrap !important; word-break: normal !important; padding-left: 8px !important; padding-right: 8px !important; border-bottom: 1px dotted #ccc; display: flex; align-items: center; justify-content: center; font-size: 15px !important; font-weight: bold; min-height: 24px; position: relative; width: 100%; color: #000; }
+        /* ธีม Local (ออฟฟิศ) โคลนหน้าตาจากตารางหลัก + ยืดความสูง 100% แบบ Firebase */
+        body.theme-local { background-color: #e9ecef; padding: 10px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
+        body.theme-local #displayTable { width: 100%; height: 100%; margin: 0 auto; background: white; padding: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border-collapse: collapse; table-layout: fixed; border: 3px solid #343a40; }
+        body.theme-local #tableHead th { background-color: #343a40; color: white; padding: 8px; font-size: 2.2vh; text-transform: uppercase; border: 1px solid #555; }
+        body.theme-local #tableHead #tableMissionHeader { background: #2c3e50; color: #ffeb3b; font-size: 2.5vh; text-align: left; padding: 8px 15px; font-weight: bold; letter-spacing: 1px; border: 1px solid #555; border-bottom: 3px solid #343a40; }
+        body.theme-local tbody { height: 92vh; }
+        body.theme-local tr.pilot-block { height: var(--row-height); }
+        body.theme-local td { border: 1px solid #bbb; text-align: center; vertical-align: top; padding: 0; }
+        body.theme-local .th-pilot { width: var(--pilot-col-width, 16%) !important; border-right: 3px solid #555 !important; }
+        body.theme-local .pilot-col { width: var(--pilot-col-width, 16%) !important; border-right: 3px solid #343a40 !important; background: #f8f9fa; vertical-align: middle; }
+        body.theme-local .pilot-num { font-size: var(--pilot-font-size, 2.8vh) !important; font-weight: bold; color: #000; padding: 0; line-height: 1.2; }
+        body.theme-local .score-cell { display: flex; flex-direction: column; height: 100%; width: 100%; padding: 0 !important; background: #fff; }
+        body.theme-local .bomb-row { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; font-size: 3.5vh !important; font-weight: bold; border-bottom: 1px dotted #ccc; width: 100%; color: #000; }
         body.theme-local .bomb-row:last-child { border-bottom: none !important; }
         body.theme-local tr td { border-bottom: 3px solid #343a40 !important; }
-        body.theme-local .th-strf-total { width: 12%; min-width: 45px; font-size: 12px; }
-        body.theme-local .total-col { background: #fff3cd; font-weight: bold; color: #856404; font-size: 16px !important; }
+        body.theme-local .th-strf-total { width: 12%; background-color: #343a40; font-size: 2.2vh; }
+        body.theme-local .total-col { background: #fff3cd; font-weight: bold; color: #856404; font-size: 5vh !important; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
@@ -137,7 +137,9 @@
         let tbody = document.getElementById('tableBody');
         
         let rowCount = Math.max(pilots.length, 4);
-        if (!isLocalMode) document.documentElement.style.setProperty('--row-height', (92 / rowCount) + "vh");
+        // สั่งให้คำนวณความสูงแถว (ยืด 100%) ทั้งโหมด Local และ Firebase
+        let rowH = (92 / rowCount) + "vh";
+        document.documentElement.style.setProperty('--row-height', rowH);
 
         let hasSTRF = columns.some(col => col.isSTRF);
         let nextLetter = String.fromCharCode(65 + columns.length);
@@ -211,10 +213,10 @@
 
             let pilotInfoHTML = "";
             if (isLocalMode) {
-                let tailDisp = p.tail ? `<span style="color:#d32f2f;font-weight:bold;background:#fff;border:1px solid #ffc107;border-radius:4px;padding:1px 2px;font-size:11px;display:inline-block;">Tail: ${p.tail}</span>` : "";
-                let pilotNameDisp = p.pilotName ? `<span style="font-weight:bold;font-size:14px;text-transform:uppercase;color:#000;">${p.pilotName}</span>` : "";
-                pilotInfoHTML = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; height: 100%;">
-                    <div style="font-weight:bold;font-size:14px;color:#000;">${p.num}</div>
+                let tailDisp = p.tail ? `<span style="color:#d32f2f;font-weight:bold;background:#fff;border:1px solid #ffc107;border-radius:4px;padding:2px 4px;font-size:1.8vh;display:inline-block;margin-top:2px;">Tail: ${p.tail}</span>` : "";
+                let pilotNameDisp = p.pilotName ? `<span style="font-weight:bold;font-size:2.5vh;text-transform:uppercase;color:#000;">${p.pilotName}</span>` : "";
+                pilotInfoHTML = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; height: 100%;">
+                    <div class="pilot-num">${p.num}</div>
                     ${pilotNameDisp}
                     ${tailDisp}
                 </div>`;
