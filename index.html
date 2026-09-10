@@ -55,6 +55,24 @@
         .th-strf-total { width: 10%; background-color: #2c3e50; }
         .total-col { background: #fff3cd; color: #856404; font-weight: bold; font-size: 6vh; vertical-align: middle; }
 
+        .otp-badge {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            background: #212529;
+            color: #ffeb3b;
+            font-size: 2.8vh;
+            font-weight: bold;
+            border-radius: 8px;
+            padding: 10px 20px;
+            z-index: 9999;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            letter-spacing: 4px;
+            font-family: 'Courier New', monospace;
+            display: none;
+        }
+        body.theme-local .otp-badge { display: block; }
+
         .latest-hl { background-color: #d4edda !important; padding: 0 5px; border-radius: 4px; display: inline-block; }
         .target-cursor { background-color: #fffde7 !important; box-shadow: inset 0 0 0 3px #d32f2f !important; }
         .group-1 { color: #FF8F00 !important; } .group-2 { color: #0D47A1 !important; }
@@ -82,6 +100,7 @@
 </head>
 <body>
 
+    <div id="otpBadge" class="otp-badge">OTP: ------</div>
     <table id="displayTable">
         <thead id="tableHead"></thead>
         <tbody id="tableBody"></tbody>
@@ -93,6 +112,26 @@
 
       // ลิงก์ Worker ของคุณ (แทนที่ Firebase SDK เดิม)
       const WORKER_URL = "https://chdy-otp-worker.chandy-score.workers.dev/?otp=123456";
+
+      let lastMissionHeader = null;
+
+      function generateAndPushOtp() {
+          const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+          document.getElementById('otpBadge').innerText = "OTP: " + newOtp;
+          fetch("https://chdy-score-default-rtdb.asia-southeast1.firebasedatabase.app/otpControl.json", {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ code: newOtp, updatedAt: Date.now() })
+          }).catch(err => console.error("ไม่สามารถอัปเดต OTP ได้:", err));
+      }
+
+      function checkMissionChangeAndUpdateOtp(data) {
+          const currentHeader = (data && data.missionHeader) ? data.missionHeader : null;
+          if (currentHeader !== lastMissionHeader) {
+              lastMissionHeader = currentHeader;
+              generateAndPushOtp();
+          }
+      }
 
       if (isLocalMode) {
           document.body.classList.add('theme-local');
@@ -133,6 +172,9 @@
 
 
       function renderBoard(data) {
+        if (isLocalMode) {
+            checkMissionChangeAndUpdateOtp(data);
+        }
         let displayTable = document.getElementById('displayTable');
         if (!data || !data.columns || data.columns.length === 0 || data.isCleared) {
             if (isLocalMode) {
