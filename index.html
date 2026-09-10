@@ -8,7 +8,8 @@
         /* รีเซ็ตค่าขอบเขตทั้งหมดให้พอดีเป๊ะ 100% */
         *, *:before, *:after { box-sizing: border-box; }
         html, body { 
-            background-color: #e9ecef; margin: 0; padding: 0; 
+            background-color: #1a1d20; /* สีพื้นหลังเริ่มต้น (หน้า Login) */
+            margin: 0; padding: 0; 
             font-family: 'Tahoma', sans-serif; 
             height: 100%; width: 100%; 
             overflow: hidden; /* ล็อกหน้าจอห้ามมีแถบเลื่อน */
@@ -29,14 +30,14 @@
             border: 1px solid #555; text-transform: uppercase; 
         }
 
-        /* ส่วนเนื้อหาแบ่งตามจำนวนนักบิน (92% ที่เหลือ) */
+        /* ส่วนเนื้อหาแบ่งตามจำนวนนักบิน */
         tbody { height: 92vh; }
         tr.pilot-block { height: var(--row-height, 23vh); }
         
         td { border: 1px solid #bbb; text-align: center; vertical-align: top; padding: 0; }
         tr td { border-bottom: 3px solid #343a40 !important; }
 
-        /* คอลัมน์ลำดับเครื่อง (ปรับยืดหยุ่นตามโหมด) */
+        /* คอลัมน์ลำดับเครื่อง (โหมดออนไลน์) */
         .th-pilot { width: var(--pilot-col-width, 6%); }
         .pilot-col { width: var(--pilot-col-width, 6%); vertical-align: middle; background: #f8f9fa; border-right: 3px solid #343a40 !important; }
         .pilot-num { font-size: var(--pilot-font-size, 4vh); font-weight: bold; color: #000; line-height: 1.2; padding: 5px; }
@@ -55,24 +56,23 @@
         .th-strf-total { width: 10%; background-color: #2c3e50; }
         .total-col { background: #fff3cd; color: #856404; font-weight: bold; font-size: 6vh; vertical-align: middle; }
 
+        /* ป้าย OTP (พับเก็บได้) */
         .otp-badge {
-            position: fixed;
-            top: 15px;
-            right: 15px;
-            background: #212529;
-            color: #ffeb3b;
-            font-size: 2.8vh;
-            font-weight: bold;
-            border-radius: 8px;
-            padding: 10px 20px;
-            z-index: 9999;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-            letter-spacing: 4px;
-            font-family: 'Courier New', monospace;
-            display: none;
+            position: fixed; top: 15px; right: 15px;
+            background: #212529; color: #ffeb3b;
+            font-size: 2.8vh; font-weight: bold;
+            border-radius: 8px; padding: 10px 20px;
+            z-index: 9999; box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            letter-spacing: 4px; font-family: 'Courier New', monospace;
+            display: none; cursor: pointer;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s;
+            user-select: none;
         }
+        .otp-badge.collapsed { transform: translateX(calc(100% - 15px)); opacity: 0.5; }
+        .otp-badge.collapsed:hover { opacity: 1; }
         body.theme-local .otp-badge { display: block; }
 
+        /* หน้าต่างกรอกรหัส (Login) */
         .otp-gate {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #1a1d20; display: flex; flex-direction: column;
@@ -92,35 +92,36 @@
         .otp-gate .otp-title { color: #ffeb3b; font-size: 2.8vh; margin-bottom: 20px; font-weight: bold; }
         .otp-gate .otp-error { color: #ff5252; font-size: 2vh; margin-top: 10px; min-height: 25px; }
 
+        /* ไฮไลท์สีต่างๆ */
         .latest-hl { background-color: #d4edda !important; padding: 0 5px; border-radius: 4px; display: inline-block; }
         .target-cursor { background-color: #fffde7 !important; box-shadow: inset 0 0 0 3px #d32f2f !important; }
         .group-1 { color: #FF8F00 !important; } .group-2 { color: #0D47A1 !important; }
-        .group-3 { color: #C2185B !important; }
-        .group-4 { color: #4A148C !important; }
+        .group-3 { color: #C2185B !important; } .group-4 { color: #4A148C !important; }
 
-        /* ธีม Local (ออฟฟิศ) โคลนหน้าตาจากตารางหลัก + ยืดความสูง 100% แบบ Firebase */
-        body.theme-local { background-color: #e9ecef; padding: 10px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
-        body.theme-local #displayTable { width: 100%; height: 100%; margin: 0 auto; background: white; padding: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border-collapse: collapse; table-layout: fixed; border: 3px solid #343a40; }
+        /* --------------------------------------------------- */
+        /* ธีม Local (ออฟฟิศ) ควบคุมความสูงและการบีบคอลัมน์ */
+        /* --------------------------------------------------- */
+        body.theme-local { background-color: #e9ecef; padding: 0; overflow: hidden; }
+        body.theme-local #displayTable { table-layout: auto; border: 3px solid #343a40; }
         body.theme-local #tableHead th { background-color: #343a40; color: white; padding: 8px; font-size: 2.2vh; text-transform: uppercase; border: 1px solid #555; }
-        body.theme-local #tableHead #tableMissionHeader { background: #2c3e50; color: #ffeb3b; font-size: 2.5vh; text-align: left; padding: 8px 15px; font-weight: bold; letter-spacing: 1px; border: 1px solid #555; border-bottom: 3px solid #343a40; }
-        body.theme-local tbody { height: 92vh; }
-        body.theme-local tr.pilot-block { height: var(--row-height); }
-        body.theme-local td { border: 1px solid #bbb; text-align: center; vertical-align: top; padding: 0; }
-        body.theme-local .th-pilot { width: var(--pilot-col-width, 16%) !important; border-right: 3px solid #555 !important; }
-        body.theme-local .pilot-col { width: var(--pilot-col-width, 16%) !important; border-right: 3px solid #343a40 !important; background: #f8f9fa; vertical-align: middle; }
-        body.theme-local .pilot-num { font-size: var(--pilot-font-size, 2.8vh) !important; font-weight: bold; color: #000; padding: 0; line-height: 1.2; }
-        body.theme-local .score-cell { display: flex; flex-direction: column; height: 100%; width: 100%; padding: 0 !important; background: #fff; }
-        body.theme-local .bomb-row { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; font-size: 3.5vh !important; font-weight: bold; border-bottom: 1px dotted #ccc; width: 100%; color: #000; }
+        body.theme-local #tableHead #tableMissionHeader { background: #2c3e50; color: #ffeb3b; font-size: 2.5vh; text-align: left; padding: 8px 15px; border-bottom: 3px solid #343a40; }
+        body.theme-local tbody { height: 84vh; /* หลบ Taskbar */ } 
+        body.theme-local .th-pilot, body.theme-local .pilot-col { width: 1% !important; white-space: nowrap; padding: 0 20px; border-right: 3px solid #343a40 !important; }
+        body.theme-local .pilot-col { background: #f8f9fa; vertical-align: middle; }
+        body.theme-local .pilot-num { font-size: 2.8vh !important; padding: 0; }
+        body.theme-local .score-cell { padding: 0 !important; background: #fff; }
+        body.theme-local .bomb-row { font-size: 3.5vh !important; border-bottom: 1px dotted #ccc; }
         body.theme-local .bomb-row:last-child { border-bottom: none !important; }
-        body.theme-local tr td { border-bottom: 3px solid #343a40 !important; }
-        body.theme-local .th-strf-total { width: 12%; background-color: #343a40; font-size: 2.2vh; }
-        body.theme-local .total-col { background: #fff3cd; font-weight: bold; color: #856404; font-size: 5vh !important; }
+        body.theme-local .th-strf-total { width: 12%; font-size: 2.2vh; }
+        body.theme-local .total-col { font-size: 5vh !important; }
     </style>
 </head>
 <body>
 
-    <div id="otpBadge" class="otp-badge">OTP: ------</div>
+    <!-- ป้าย OTP (ซ่อนอัตโนมัติในโหมดออนไลน์) -->
+    <div id="otpBadge" class="otp-badge" onclick="this.classList.toggle('collapsed')" title="คลิกเพื่อพับเก็บ/แสดงผล">OTP: ------</div>
 
+    <!-- หน้าต่าง Login (แสดงเฉพาะออนไลน์) -->
     <div id="otpGate" class="otp-gate" style="display:none;">
         <img src="https://raw.githubusercontent.com/Chandy05/Chandy-MetarUpdate/main/logo_main.png" alt="Logo" style="height: 120px; margin-bottom: 20px;">
         <div class="otp-title">🔒 กรุณากรอกรหัส OTP</div>
@@ -129,69 +130,89 @@
         <div class="otp-error" id="otpError"></div>
     </div>
 
-    <table id="displayTable">
+    <!-- ตารางคะแนน -->
+    <table id="displayTable" style="display:none;">
         <thead id="tableHead"></thead>
         <tbody id="tableBody"></tbody>
     </table>
     
-        <script>
+    <script>
       const urlParams = new URLSearchParams(window.location.search);
       const isLocalMode = urlParams.get('local') === 'true' || window.location.href.includes('local=true');
 
-      // ลิงก์ Worker ของคุณ (แทนที่ Firebase SDK เดิม)
-      const WORKER_URL = "https://chdy-otp-worker.chandy-score.workers.dev/?otp=123456";
+      // Firebase & Worker Config
+      const FIREBASE_OTP_URL = "https://chdy-score-default-rtdb.asia-southeast1.firebasedatabase.app/otpControl.json";
+      const WORKER_BASE_URL = "https://chdy-otp-worker.chandy-score.workers.dev/";
 
       let lastMissionHeader = null;
-
-      function generateAndPushOtp() {
-          const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
-          document.getElementById('otpBadge').innerText = "OTP: " + newOtp;
-          fetch("https://chdy-score-default-rtdb.asia-southeast1.firebasedatabase.app/otpControl.json", {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ code: newOtp, updatedAt: Date.now() })
-          }).catch(err => console.error("ไม่สามารถอัปเดต OTP ได้:", err));
-      }
-
-      function checkMissionChangeAndUpdateOtp(data) {
-          const currentHeader = (data && data.missionHeader) ? data.missionHeader : null;
-          if (currentHeader !== lastMissionHeader) {
-              lastMissionHeader = currentHeader;
-              generateAndPushOtp();
-          }
-      }
-
       let verifiedOtp = null;
-      let fetchIntervalId = null;
+      let fetchTimerId = null;
 
+      // ==========================================
+      // โหมด LOCAL (กรรมการ)
+      // ==========================================
       if (isLocalMode) {
           document.body.classList.add('theme-local');
           document.title = "OFFICE DISPLAY (LOCAL)";
+          document.getElementById('displayTable').style.display = 'table';
+          document.getElementById('otpGate').style.display = 'none';
+
+          function generateAndPushOtp() {
+              const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+              document.getElementById('otpBadge').innerText = "OTP: " + newOtp;
+              fetch(FIREBASE_OTP_URL, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ code: newOtp, updatedAt: Date.now() })
+              }).catch(err => console.error("ไม่สามารถอัปเดต OTP ได้:", err));
+          }
+
+          // [ฟีเจอร์ใหม่] เมื่อกรรมการปิดหน้าจอ ให้ทำลายรหัส OTP ทันที!
+          window.addEventListener('beforeunload', () => {
+              navigator.sendBeacon(FIREBASE_OTP_URL, JSON.stringify({ code: "000000", status: "CLOSED", updatedAt: Date.now() }));
+          });
 
           window.addEventListener('storage', (event) => {
             if (event.key === 'liveDisplayData' && event.newValue) renderBoard(JSON.parse(event.newValue));
           });
+
           window.addEventListener('DOMContentLoaded', () => {
             let initData = localStorage.getItem('liveDisplayData');
             if (initData) renderBoard(JSON.parse(initData));
             else renderBoard(null);
           });
+
+      // ==========================================
+      // โหมด ONLINE (ผู้ชมทางบ้าน)
+      // ==========================================
       } else {
           document.getElementById('displayTable').style.display = 'none';
           document.getElementById('otpGate').style.display = 'flex';
 
+          // ตรวจสอบว่าเคยล็อกอินไว้ไหม
           let savedOtp = sessionStorage.getItem('verifiedOtp');
           if (savedOtp) {
               verifiedOtp = savedOtp;
               document.getElementById('otpGate').style.display = 'none';
-              startFetchingData();
+              document.getElementById('displayTable').style.display = 'table';
+              startSmartPolling();
           }
 
           document.getElementById('otpInput').addEventListener('keypress', function(e) {
               if (e.key === 'Enter') submitOtp();
           });
+
+          // [ฟีเจอร์ใหม่] Smart Polling: หยุดดึงข้อมูลเมื่อพับจอ/สลับแท็บ
+          document.addEventListener("visibilitychange", () => {
+              if (document.hidden) {
+                  clearTimeout(fetchTimerId); // หยุดการดึงข้อมูล
+              } else {
+                  if (verifiedOtp) startSmartPolling(); // กลับมาดึงข้อมูลต่อ
+              }
+          });
       }
 
+      // ระบบ ยืนยันรหัส OTP (ออนไลน์)
       async function submitOtp() {
           const inputVal = document.getElementById('otpInput').value.trim();
           const errorBox = document.getElementById('otpError');
@@ -199,9 +220,9 @@
               errorBox.innerText = "กรุณากรอกรหัส 6 หลัก";
               return;
           }
+          errorBox.innerText = "กำลังตรวจสอบ...";
           try {
-              const testUrl = `https://chdy-otp-worker.chandy-score.workers.dev/?otp=${inputVal}`;
-              const response = await fetch(testUrl);
+              const response = await fetch(`${WORKER_BASE_URL}?otp=${inputVal}`);
               const data = await response.json();
               if (data && data.error) {
                   errorBox.innerText = "รหัส OTP ไม่ถูกต้อง กรุณาลองใหม่";
@@ -209,68 +230,100 @@
                   verifiedOtp = inputVal;
                   sessionStorage.setItem('verifiedOtp', inputVal);
                   document.getElementById('otpGate').style.display = 'none';
+                  document.getElementById('displayTable').style.display = 'table';
                   renderBoard(data);
-                  startFetchingData();
+                  startSmartPolling();
               }
           } catch (err) {
-              errorBox.innerText = "เกิดข้อผิดพลาด กรุณาลองใหม่";
+              errorBox.innerText = "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์";
           }
       }
 
-      function startFetchingData() {
-          async function fetchDataFromWorker() {
+      // ระบบดึงข้อมูลอัจฉริยะ (Smart Polling)
+      function startSmartPolling() {
+          clearTimeout(fetchTimerId);
+          async function fetchLoop() {
+              if (document.hidden || !verifiedOtp) return; // ถ้าพับจอ หรือไม่มีรหัส ให้หยุดทำงาน
+              
+              let nextDelay = 3000; // ค่าเริ่มต้นดึงทุก 3 วินาที
+
               try {
-                  const url = `https://chdy-otp-worker.chandy-score.workers.dev/?otp=${verifiedOtp}`;
-                  const response = await fetch(url);
-                  if (!response.ok) throw new Error("Fetch failed: " + response.status);
+                  const response = await fetch(`${WORKER_BASE_URL}?otp=${verifiedOtp}`);
                   const data = await response.json();
+                  
+                  // ถ้ารหัสผิด, กรรมการล้างรหัส, หรือกรรมการปิดหน้าจอ
                   if (data && data.error) {
-                      sessionStorage.removeItem('verifiedOtp');
-                      document.getElementById('displayTable').style.display = 'none';
-                      document.getElementById('otpGate').style.display = 'flex';
-                      document.getElementById('otpError').innerText = "รหัส OTP หมดอายุ กรุณากรอกใหม่";
-                      clearInterval(fetchIntervalId);
-                      return;
+                      forceLogout("รหัส OTP ถูกยกเลิก หรือ ภารกิจจบลงแล้ว");
+                      return; // จบการทำงาน
                   }
+                  
                   renderBoard(data);
+
+                  // [ฟีเจอร์ใหม่] ถ้ากระดานว่าง (Standby) ให้ดึงข้อมูลช้าลงเป็นทุกๆ 15 วินาที เพื่อประหยัดโควต้า
+                  if (!data || !data.columns || data.columns.length === 0 || data.isCleared) {
+                      nextDelay = 15000; 
+                  }
               } catch (err) {
-                  console.error("Error fetching data from Worker:", err);
+                  console.error("Fetch error:", err);
               }
+              // ตั้งเวลาเรียกตัวเองซ้ำตามความเหมาะสม
+              fetchTimerId = setTimeout(fetchLoop, nextDelay);
           }
-          fetchDataFromWorker();
-          fetchIntervalId = setInterval(fetchDataFromWorker, 3000);
+          fetchLoop();
+      }
+
+      // ฟังก์ชันเตะออก (Force Logout)
+      function forceLogout(message) {
+          sessionStorage.removeItem('verifiedOtp');
+          verifiedOtp = null;
+          clearTimeout(fetchTimerId);
+          
+          document.getElementById('displayTable').style.display = 'none';
+          document.body.style.backgroundColor = '#1a1d20'; // รีเซ็ตฉากหลังให้มืด
+          document.getElementById('otpGate').style.display = 'flex'; // แสดงหน้า Login
+          document.getElementById('otpInput').value = ""; // เคลียร์ช่องพิมพ์
+          document.getElementById('otpError').innerText = message;
       }
 
 
+      // ==========================================
+      // ระบบวาดหน้าจอ (Render Engine) - เหมือนเดิม
+      // ==========================================
       function renderBoard(data) {
         if (isLocalMode) {
-            checkMissionChangeAndUpdateOtp(data);
+            const currentHeader = (data && data.missionHeader) ? data.missionHeader : null;
+            if (currentHeader !== lastMissionHeader) {
+                lastMissionHeader = currentHeader;
+                generateAndPushOtp();
+            }
         }
+        
         let displayTable = document.getElementById('displayTable');
+        
+        // กรณีไม่มีข้อมูล หรือถูกล้างกระดาน
         if (!data || !data.columns || data.columns.length === 0 || data.isCleared) {
+            document.body.style.backgroundColor = '#e9ecef';
             if (isLocalMode) {
-                displayTable.style.display = 'table';
-                document.body.style.backgroundColor = '#e9ecef';
                 document.getElementById('tableHead').innerHTML = `<tr><th style="padding:15px; font-size:24px; color:#ffeb3b; background:#343a40;">⏳ STANDBY / รอเริ่มภารกิจถัดไป...</th></tr>`;
                 document.getElementById('tableBody').innerHTML = `<tr><td style="height: 50vh; vertical-align:middle; text-align:center; font-size:20px; color:#555;">กระดานถูกล้าง กรุณากด TIME IN จากหน้าจอหลักเพื่อเริ่มการแสดงผล</td></tr>`;
             } else {
-                displayTable.style.display = 'none';
-                document.body.style.backgroundColor = '#ffffff';
+                document.getElementById('tableHead').innerHTML = `<tr><th style="padding:15px; font-size:3vh; color:#fff; background:#1a1d20;">⏳ รอผลการยิงจากศูนย์อำนวยการ...</th></tr>`;
+                document.getElementById('tableBody').innerHTML = `<tr><td style="height: 50vh; background: #fff;"></td></tr>`;
             }
             return;
-        } else {
-            displayTable.style.display = 'table';
-            document.body.style.backgroundColor = '#e9ecef';
         }
 
+        // กรณีมีข้อมูล
+        document.body.style.backgroundColor = '#e9ecef';
         let columns = data.columns;
         let pilots = (data && Array.isArray(data.pilots) && data.pilots.length) ? data.pilots : [];
         let thead = document.getElementById('tableHead');
         let tbody = document.getElementById('tableBody');
         
         let rowCount = Math.max(pilots.length, 4);
-        // สั่งให้คำนวณความสูงแถว (ยืด 100%) ทั้งโหมด Local และ Firebase
-        let rowH = (92 / rowCount) + "vh";
+        // คำนวณความสูงแถว: Local ใช้ 84vh (หลบ Taskbar), Online ใช้ 92vh
+        let totalVh = isLocalMode ? 84 : 92;
+        let rowH = (totalVh / rowCount) + "vh";
         document.documentElement.style.setProperty('--row-height', rowH);
 
         let hasSTRF = columns.some(col => col.isSTRF);
@@ -330,11 +383,8 @@
 
                             let escaped = cleanVal.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                             escaped = escaped.replace(/\+/g, '<span class="plus-sign">+</span>');
-                            
-                            // Re-inject colors for special stamp characters (F and *) with tighter spacing
                             escaped = escaped.replace(/\s*F$/g, '<span style="color:#dc3545;font-weight:bold;margin-left:2px;">F</span>');
                             escaped = escaped.replace(/\s*\*$/g, '<span style="color:#ff9800;font-weight:bold;margin-left:2px;">*</span>');
-
                             spanHtml = inlineColor ? `<span class="${hlClass}" style="${inlineColor}">${escaped}</span>` : `<span class="${hlClass}">${escaped}</span>`;
                         }
                     }
@@ -365,6 +415,6 @@
 
         tbody.innerHTML = rowsHtml;
       }
-        </script>
+    </script>
 </body>
 </html>
