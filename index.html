@@ -422,6 +422,12 @@
             let summaryCellHtml = "";
             if (hasScoring) {
                 let sHtml = p.scoreSummary || "";
+                
+                // [ฟีเจอร์ OPSEC] ถ้าเป็นจอออนไลน์ ให้ลบชื่อโปรไฟล์และเครื่องหมาย (:) ทิ้ง เหลือแต่ตัวเลข
+                if (!isLocalMode) {
+                    sHtml = sHtml.replace(/>[^<]*\s*:\s*<span/g, '><span');
+                }
+
                 summaryCellHtml = `<td style="background-color:#fff3cd; vertical-align:middle; font-size:2.2vh; padding:4px;">${sHtml}</td>`;
             }
 
