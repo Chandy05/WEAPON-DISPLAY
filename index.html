@@ -332,11 +332,13 @@
         document.documentElement.style.setProperty('--row-height', rowH);
 
         let hasSTRF = columns.some(col => col.isSTRF);
+        let hasScoring = (data.scoringMode && data.scoringMode !== 'OFF');
         let nextLetter = String.fromCharCode(65 + columns.length);
+        let colspanCount = columns.length + (hasSTRF ? 2 : 1) + (hasScoring ? 1 : 0);
 
         if (isLocalMode) {
             let mH = (data && data.missionHeader) ? data.missionHeader : "-";
-            thead.innerHTML = `<tr><th colspan="${columns.length + (hasSTRF?2:1)}" id="tableMissionHeader">
+            thead.innerHTML = `<tr><th colspan="${colspanCount}" id="tableMissionHeader">
                 <div style="display: flex; align-items: center; justify-content: flex-start; gap: 12px;">
                     <img src="https://raw.githubusercontent.com/Chandy05/Chandy-MetarUpdate/main/logo_main.png" style="height: 28px;">
                     <span>${mH}</span>
@@ -344,14 +346,16 @@
             </th></tr>` + 
             `<tr><th class="th-pilot">Pilot / Tail</th>` + 
             columns.map(c => `<th style="padding: 8px;">${c.name}</th>`).join('') + 
-            (hasSTRF ? `<th class="th-strf-total">รวม STRF</th>` : "") + `</tr>`;
+            (hasSTRF ? `<th class="th-strf-total">รวม STRF</th>` : "") + 
+            (hasScoring ? `<th class="th-strf-total" style="color: #FF9800; border-right: 3px solid #555;">คะแนน</th>` : "") + `</tr>`;
         } else {
             thead.innerHTML = `<tr><th class="th-pilot">#</th>` + 
                 columns.map(c => `<th>${c.name}</th>`).join('') + 
-                (hasSTRF ? `<th class="th-strf-total">${nextLetter}</th>` : "") + `</tr>`;
+                (hasSTRF ? `<th class="th-strf-total">${nextLetter}</th>` : "") + 
+                (hasScoring ? `<th class="th-strf-total" style="color: #FF9800; border-right: 3px solid #555;">SCORE</th>` : "") + `</tr>`;
         }
 
-        const fallbackPilots = Array.from({ length: 4 }, (_, idx) => ({ pId: idx + 1, num: `#${idx + 1}`, strfTotal: 0, cols: {} }));
+        const fallbackPilots = Array.from({ length: 4 }, (_, idx) => ({ pId: idx + 1, num: `#${idx + 1}`, strfTotal: 0, scoreSummary: "", cols: {} }));
         const pilotsToRender = pilots.length > 0 ? pilots : fallbackPilots;
 
         const rowsHtml = pilotsToRender.map(p => {
@@ -390,6 +394,10 @@
                             escaped = escaped.replace(/\+/g, '<span class="plus-sign">+</span>');
                             escaped = escaped.replace(/\s*F$/g, '<span style="color:#dc3545;font-weight:bold;margin-left:2px;">F</span>');
                             escaped = escaped.replace(/\s*\*$/g, '<span style="color:#ff9800;font-weight:bold;margin-left:2px;">*</span>');
+                            
+                            // [เพิ่มใหม่] ค้นหาตัวเลขในวงเล็บ เช่น [100] แล้วระบายสีแดงส้มตัวหนา เหมือนหน้าหลักเป๊ะๆ
+                            escaped = escaped.replace(/(\[\d+\])/g, '<span style="color:#d84315; font-size:0.85em; font-weight:900; margin-left:6px;">$1</span>');
+                            
                             spanHtml = inlineColor ? `<span class="${hlClass}" style="${inlineColor}">${escaped}</span>` : `<span class="${hlClass}">${escaped}</span>`;
                         }
                     }
@@ -411,10 +419,17 @@
                 pilotInfoHTML = `<div class="pilot-num">${p.num}</div>`;
             }
 
+            let summaryCellHtml = "";
+            if (hasScoring) {
+                let sHtml = p.scoreSummary || "";
+                summaryCellHtml = `<td style="background-color:#fff3cd; vertical-align:middle; font-size:2.2vh; padding:4px;">${sHtml}</td>`;
+            }
+
             return `<tr class="pilot-block">
                 <td class="pilot-col">${pilotInfoHTML}</td>
                 ${colsHTML}
                 ${hasSTRF ? `<td class="total-col">${strfTotal}</td>` : ""}
+                ${summaryCellHtml}
             </tr>`;
         }).join('');
 
