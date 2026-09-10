@@ -167,11 +167,14 @@
               }).catch(err => console.error("ไม่สามารถอัปเดต OTP ได้:", err));
           }
 
-          // [ฟีเจอร์ใหม่] เมื่อกรรมการปิดหน้าจอ ให้ทำลายรหัส OTP ทันที! (ปรับปรุงให้รองรับทุกเบราว์เซอร์)
+          // [ฟีเจอร์ใหม่] เมื่อกรรมการปิดหน้าจอ ให้ทำลายรหัส OTP ทันที! (ใช้ fetch keepalive เพื่อรองรับ PUT)
           window.addEventListener('pagehide', () => {
-              const payload = JSON.stringify({ code: "000000", updatedAt: Date.now() });
-              const blob = new Blob([payload], { type: 'application/json' });
-              navigator.sendBeacon(FIREBASE_OTP_URL, blob);
+              fetch(FIREBASE_OTP_URL, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ code: "000000", updatedAt: Date.now() }),
+                  keepalive: true // คำสั่งลับ: สั่งให้เบราว์เซอร์ส่งข้อมูลให้เสร็จแม้แท็บจะถูกปิดไปแล้ว
+              }).catch(err => console.error("Force logout failed", err));
           });
 
           window.addEventListener('storage', (event) => {
