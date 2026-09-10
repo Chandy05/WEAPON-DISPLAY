@@ -73,6 +73,25 @@
         }
         body.theme-local .otp-badge { display: block; }
 
+        .otp-gate {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #1a1d20; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 99999;
+            font-family: 'Tahoma', sans-serif;
+        }
+        .otp-gate input {
+            font-size: 3vh; letter-spacing: 8px; text-align: center;
+            padding: 12px 20px; border-radius: 8px; border: none;
+            width: 260px; margin-bottom: 15px; font-family: 'Courier New', monospace;
+        }
+        .otp-gate button {
+            font-size: 2.2vh; padding: 10px 30px; border-radius: 8px;
+            background: #ffc107; border: none; cursor: pointer; font-weight: bold;
+        }
+        .otp-gate button:hover { background: #ffca2c; }
+        .otp-gate .otp-title { color: #ffeb3b; font-size: 2.8vh; margin-bottom: 20px; font-weight: bold; }
+        .otp-gate .otp-error { color: #ff5252; font-size: 2vh; margin-top: 10px; min-height: 25px; }
+
         .latest-hl { background-color: #d4edda !important; padding: 0 5px; border-radius: 4px; display: inline-block; }
         .target-cursor { background-color: #fffde7 !important; box-shadow: inset 0 0 0 3px #d32f2f !important; }
         .group-1 { color: #FF8F00 !important; } .group-2 { color: #0D47A1 !important; }
@@ -101,6 +120,14 @@
 <body>
 
     <div id="otpBadge" class="otp-badge">OTP: ------</div>
+
+    <div id="otpGate" class="otp-gate" style="display:none;">
+        <div class="otp-title">🔒 กรุณากรอกรหัส OTP เพื่อเข้าดูผลการยิง</div>
+        <input type="text" id="otpInput" maxlength="6" placeholder="- - - - - -" inputmode="numeric">
+        <button onclick="submitOtp()">ยืนยัน</button>
+        <div class="otp-error" id="otpError"></div>
+    </div>
+
     <table id="displayTable">
         <thead id="tableHead"></thead>
         <tbody id="tableBody"></tbody>
@@ -133,6 +160,9 @@
           }
       }
 
+      let verifiedOtp = null;
+      let fetchIntervalId = null;
+
       if (isLocalMode) {
           document.body.classList.add('theme-local');
           document.title = "OFFICE DISPLAY (LOCAL)";
@@ -146,28 +176,68 @@
             else renderBoard(null);
           });
       } else {
-          window.addEventListener('DOMContentLoaded', () => {
-            let initData = localStorage.getItem('liveDisplayData');
-            if (initData) renderBoard(JSON.parse(initData));
-            else renderBoard(null);
-          });
+          document.getElementById('displayTable').style.display = 'none';
+          document.getElementById('otpGate').style.display = 'flex';
 
-          // ดึงข้อมูลจาก Worker แทน Firebase Realtime Listener
-          async function fetchDataFromWorker() {
-            try {
-              const response = await fetch(WORKER_URL);
-              if (!response.ok) throw new Error("Fetch failed: " + response.status);
-              const data = await response.json();
-              if (data && !data.error) {
-                renderBoard(data);
-              }
-            } catch (err) {
-              console.error("Error fetching data from Worker:", err);
-            }
+          let savedOtp = sessionStorage.getItem('verifiedOtp');
+          if (savedOtp) {
+              verifiedOtp = savedOtp;
+              document.getElementById('otpGate').style.display = 'none';
+              startFetchingData();
           }
 
-          fetchDataFromWorker(); // โหลดข้อมูลทันทีตอนเปิดหน้า
-          setInterval(fetchDataFromWorker, 3000); // อัปเดตข้อมูลทุก 3 วินาที
+          document.getElementById('otpInput').addEventListener('keypress', function(e) {
+              if (e.key === 'Enter') submitOtp();
+          });
+      }
+
+      async function submitOtp() {
+          const inputVal = document.getElementById('otpInput').value.trim();
+          const errorBox = document.getElementById('otpError');
+          if (inputVal.length !== 6) {
+              errorBox.innerText = "กรุณากรอกรหัส 6 หลัก";
+              return;
+          }
+          try {
+              const testUrl = `https://chdy-otp-worker.chandy-score.workers.dev/?otp=${inputVal}`;
+              const response = await fetch(testUrl);
+              const data = await response.json();
+              if (data && data.error) {
+                  errorBox.innerText = "รหัส OTP ไม่ถูกต้อง กรุณาลองใหม่";
+              } else {
+                  verifiedOtp = inputVal;
+                  sessionStorage.setItem('verifiedOtp', inputVal);
+                  document.getElementById('otpGate').style.display = 'none';
+                  renderBoard(data);
+                  startFetchingData();
+              }
+          } catch (err) {
+              errorBox.innerText = "เกิดข้อผิดพลาด กรุณาลองใหม่";
+          }
+      }
+
+      function startFetchingData() {
+          async function fetchDataFromWorker() {
+              try {
+                  const url = `https://chdy-otp-worker.chandy-score.workers.dev/?otp=${verifiedOtp}`;
+                  const response = await fetch(url);
+                  if (!response.ok) throw new Error("Fetch failed: " + response.status);
+                  const data = await response.json();
+                  if (data && data.error) {
+                      sessionStorage.removeItem('verifiedOtp');
+                      document.getElementById('displayTable').style.display = 'none';
+                      document.getElementById('otpGate').style.display = 'flex';
+                      document.getElementById('otpError').innerText = "รหัส OTP หมดอายุ กรุณากรอกใหม่";
+                      clearInterval(fetchIntervalId);
+                      return;
+                  }
+                  renderBoard(data);
+              } catch (err) {
+                  console.error("Error fetching data from Worker:", err);
+              }
+          }
+          fetchDataFromWorker();
+          fetchIntervalId = setInterval(fetchDataFromWorker, 3000);
       }
 
 
