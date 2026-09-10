@@ -167,9 +167,11 @@
               }).catch(err => console.error("ไม่สามารถอัปเดต OTP ได้:", err));
           }
 
-          // [ฟีเจอร์ใหม่] เมื่อกรรมการปิดหน้าจอ ให้ทำลายรหัส OTP ทันที!
-          window.addEventListener('beforeunload', () => {
-              navigator.sendBeacon(FIREBASE_OTP_URL, JSON.stringify({ code: "000000", status: "CLOSED", updatedAt: Date.now() }));
+          // [ฟีเจอร์ใหม่] เมื่อกรรมการปิดหน้าจอ ให้ทำลายรหัส OTP ทันที! (ปรับปรุงให้รองรับทุกเบราว์เซอร์)
+          window.addEventListener('pagehide', () => {
+              const payload = JSON.stringify({ code: "000000", updatedAt: Date.now() });
+              const blob = new Blob([payload], { type: 'application/json' });
+              navigator.sendBeacon(FIREBASE_OTP_URL, blob);
           });
 
           window.addEventListener('storage', (event) => {
