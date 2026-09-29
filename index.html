@@ -119,7 +119,7 @@
 <body>
 
     <!-- ป้าย OTP (ซ่อนอัตโนมัติในโหมดออนไลน์) -->
-    <div id="otpBadge" class="otp-badge" onclick="this.classList.toggle('collapsed')" title="คลิกเพื่อพับเก็บ/แสดงผล">OTP: ------</div>
+    <div id="otpBadge" class="otp-badge" style="display:none;" onclick="this.classList.toggle('collapsed')" title="คลิกเพื่อพับเก็บ/แสดงผล">OTP: ------</div>
 
     <!-- หน้าต่าง Login (แสดงเฉพาะออนไลน์) -->
     <div id="otpGate" class="otp-gate" style="display:none;">
@@ -141,7 +141,6 @@
       const isLocalMode = urlParams.get('local') === 'true' || window.location.href.includes('local=true');
 
       // Firebase & Worker Config
-      const FIREBASE_OTP_URL = "https://chdy-score-default-rtdb.asia-southeast1.firebasedatabase.app/otpControl.json";
       const WORKER_BASE_URL = "https://chdy-otp-worker.chandy-score.workers.dev/";
 
       let lastMissionHeader = null;
@@ -157,28 +156,38 @@
           document.getElementById('displayTable').style.display = 'table';
           document.getElementById('otpGate').style.display = 'none';
 
-          function generateAndPushOtp() {
-              const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
-              document.getElementById('otpBadge').innerText = "OTP: " + newOtp;
-              fetch(FIREBASE_OTP_URL, {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ code: newOtp, updatedAt: Date.now() })
-              }).catch(err => console.error("ไม่สามารถอัปเดต OTP ได้:", err));
+          // [OTP-SLAVE] จอ Local ไม่สร้าง OTP เองอีกต่อไป และไม่ PUT ไป Firebase
+          // หน้าที่เดียวคือดึงเลขที่จอหลักสร้างไว้มาแสดง
+          function applyOtpFromMaster(data) {
+              const badge = document.getElementById('otpBadge');
+              if (!badge) return;
+
+              // ลำดับความน่าเชื่อถือ: liveDisplayOTP (จอหลักเขียนตรงจาก masterOTP) -> data.otp
+              let otp = String(localStorage.getItem('liveDisplayOTP') || "").trim();
+              if (!otp && data && data.otp) otp = String(data.otp).trim();
+
+              // ไม่มีเลข / เลขไม่ครบ 6 หลัก / 000000 / จอหลักปิด Firebase => ซ่อนป้ายไปเลย
+              if (!/^\d{6}$/.test(otp) || otp === "000000") {
+                  badge.innerText = "OTP: ------";
+                  badge.style.display = 'none';
+                  return;
+              }
+
+              badge.style.display = '';
+              badge.innerText = "OTP: " + otp;
           }
 
-          // [ฟีเจอร์ใหม่] เมื่อกรรมการปิดหน้าจอ ให้ทำลายรหัส OTP ทันที! (ใช้ fetch keepalive เพื่อรองรับ PUT)
-          window.addEventListener('pagehide', () => {
-              fetch(FIREBASE_OTP_URL, {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ code: "000000", updatedAt: Date.now() }),
-                  keepalive: true // คำสั่งลับ: สั่งให้เบราว์เซอร์ส่งข้อมูลให้เสร็จแม้แท็บจะถูกปิดไปแล้ว
-              }).catch(err => console.error("Force logout failed", err));
-          });
+          // [OTP-SLAVE] ยกเลิกการ force logout จากจอ Local
+          // การล้าง OTP (000000 / CLOSED) เป็นหน้าที่ของจอหลักเท่านั้น
 
           window.addEventListener('storage', (event) => {
             if (event.key === 'liveDisplayData' && event.newValue) renderBoard(JSON.parse(event.newValue));
+            // [OTP-SLAVE] จอหลักเปลี่ยน/ล้าง OTP -> อัปเดตป้ายทันทีโดยไม่ต้องรอข้อมูลตาราง
+            if (event.key === 'liveDisplayOTP' && isLocalMode) {
+                let d = null;
+                try { d = JSON.parse(localStorage.getItem('liveDisplayData') || 'null'); } catch(e) { d = null; }
+                applyOtpFromMaster(d);
+            }
           });
 
           window.addEventListener('DOMContentLoaded', () => {
@@ -295,11 +304,8 @@
       // ==========================================
       function renderBoard(data) {
         if (isLocalMode) {
-            const currentHeader = (data && data.missionHeader) ? data.missionHeader : null;
-            if (currentHeader !== lastMissionHeader) {
-                lastMissionHeader = currentHeader;
-                generateAndPushOtp();
-            }
+            // [OTP-SLAVE] แสดงเลขจากจอหลักทุกครั้งที่วาดกระดาน ไม่สร้างเลขใหม่
+            applyOtpFromMaster(data);
         }
         
         let displayTable = document.getElementById('displayTable');
@@ -406,17 +412,15 @@
             }).join('');
 
             let pilotInfoHTML = "";
-            if (isLocalMode) {
-                let tailDisp = p.tail ? `<span style="color:#d32f2f;font-weight:bold;background:#fff;border:1px solid #ffc107;border-radius:4px;padding:2px 4px;font-size:1.8vh;display:inline-block;margin-top:2px;">Tail: ${p.tail}</span>` : "";
-                let pilotNameDisp = p.pilotName ? `<span style="font-weight:bold;font-size:2.5vh;text-transform:uppercase;color:#000;">${p.pilotName}</span>` : "";
-                pilotInfoHTML = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; height: 100%;">
-                    <div class="pilot-num">${p.num}</div>
-                    ${pilotNameDisp}
-                    ${tailDisp}
-                </div>`;
-            } else {
-                pilotInfoHTML = `<div class="pilot-num">${p.num}</div>`;
-            }
+            let tailDisp = p.tail ? `<span style="color:#555;font-weight:bold;background:#fff;border:1px solid #ffc107;border-radius:4px;padding:2px 4px;font-size:1.8vh;margin-left:5px;display:inline-block;">Tail: ${p.tail}</span>` : "";
+            let pilotNameDisp = p.pilotName ? `<div style="font-weight:bold;font-size:2.5vh;text-transform:uppercase;color:#000;">${p.pilotName}</div>` : "";
+            let configDisp = p.config ? `<div style="font-size:1.8vh;font-weight:bold;color:#d32f2f;text-transform:uppercase;white-space:nowrap;">${p.config}</div>` : "";
+            
+            pilotInfoHTML = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; height: 100%; line-height: 1.1;">
+                <div style="font-size:2.2vh; font-weight:bold; color:#000; display:flex; align-items:center;">${p.num}${tailDisp}</div>
+                ${pilotNameDisp}
+                ${configDisp}
+            </div>`;
 
             // เพิ่มช่องแสดงคะแนนรวม
             let summaryCellHtml = "";
