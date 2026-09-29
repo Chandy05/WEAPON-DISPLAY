@@ -239,7 +239,11 @@
               const response = await fetch(`${WORKER_BASE_URL}?otp=${inputVal}`);
               const data = await response.json();
               if (data && data.error) {
-                  errorBox.innerText = "รหัส OTP ไม่ถูกต้อง กรุณาลองใหม่";
+                  if (data.error === "TOO_MANY_REQUESTS") {
+                      errorBox.innerText = "⛔ กรอกรหัสผิดหลายครั้งเกินไป กรุณารอ 1 นาทีแล้วลองใหม่";
+                  } else {
+                      errorBox.innerText = "❌ รหัส OTP ไม่ถูกต้อง กรุณาลองใหม่";
+                  }
               } else {
                   verifiedOtp = inputVal;
                   sessionStorage.setItem('verifiedOtp', inputVal);
